@@ -1,45 +1,67 @@
-import numpy as np
+from datetime import datetime
+
 import pandas as pd
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from sqlalchemy import create_engine, MetaData, select, and_
 
 app = Flask(__name__)
+conn = create_engine('sqlite:///candidates.db', echo=False)
+meta = MetaData(bind=conn)
+meta.reflect()
+cand = meta.tables['candidates']
 CORS(app)
 
 
 @app.route("/", methods=['GET', 'POST'])
 def main():
-    df = pd.read_csv("job1.csv")
-    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-    df = df[df.prob > 0.9]
-    if 'grade' not in df:
-        df['grade'] = [np.nan for _ in range(len(df))]
-    if 'graded_at' not in df:
-        df['graded_at'] = [np.nan for _ in range(len(df))]
-
-    res = None
     if request.method == 'GET':
         if 'back' in request.args:
-            ra, dec = float(request.args['ra']), float(request.args['dec'])
-            matching = np.isclose(df['ra'], ra) & np.isclose(df['dec'], dec)
-            graded = df[matching].iloc[0]['graded_at']
-            rows = df[df['graded_at'] < graded] if not isinstance(graded, float) else df[pd.notna(df['graded_at'])]
-            rows = rows.sort_values(by='graded_at', ascending=False)
+            idx, user = int(request.args['id']), request.args['user']
+            time = next(conn.execute(select([cand]).where(cand.c.id == idx).distinct()))['graded_time']
+            if time != 0:
+                query = select([cand]).where(
+                    and_(cand.c.graded_time < time, cand.c.graded_time > 0, cand.c.graded_by == user)).order_by(
+                    cand.c.graded_time.desc())
+            else:
+                query = select([cand]).where(
+                    and_(cand.c.graded_time > 0, cand.c.graded_by == user)).order_by(
+                    cand.c.graded_time.desc())
         else:
-            rows = df[~pd.notna(df['grade'])]
-        if len(rows) >= 1:
-            n = min(int(request.args['n']), len(rows)) if 'n' in request.args else 10
-            res = jsonify({'ras': list(rows.iloc[:n].ra), 'decs': list(rows.iloc[:n].dec), 'done': False})
-        else:
-            res = jsonify({'ras': [], 'decs': []})
+            user = request.args['user']
+            query = select([cand]).where(and_(cand.c.grade == None, cand.c.graded_by == user))
+        n = int(request.args['n']) if 'n' in request.args else 10
+        ret = []
+        for i, row in enumerate(conn.execute(query)):
+            if i >= n:
+                break
+            else:
+                ret.append(dict(row))
+        return jsonify(ret)
 
     elif request.method == 'POST':
         json = request.get_json()
-        ra, dec, grade = json['ra'], json['dec'], json['grade']
-        df.loc[
-            np.isclose(df['ra'], ra) & np.isclose(df['dec'], dec), ['grade', 'graded_at']] = grade, pd.Timestamp.now()
-        res = jsonify({"success": True})
+        idx, grade = int(json['id']), int(json['grade'])
+        stmt = cand.update().where(cand.c.id == idx).values(grade=grade, graded_time=int(datetime.now().timestamp()))
+        conn.execute(stmt)
+        return jsonify({"success": True})
 
-    if res is not None:
-        df.to_csv("job1.csv", index=False)
-        return res
+
+@app.route("/to_csv", methods=['GET'])
+def to_csv():
+    df = pd.read_sql(sql='SELECT * FROM candidates', con=conn)
+    df['graded_time'] = pd.to_datetime(df['graded_time'].replace(0, None), unit='s')
+    df.to_csv("export.csv")
+    return jsonify({"success": True})
+
+@app.route("/users", methods=['GET'])
+def get_users():
+    return jsonify([x['graded_by'] for x in conn.execute(select([cand.c.graded_by]).distinct())])
+
+@app.route("/comment", methods=['POST'])
+def comment():
+    json = request.get_json()
+    idx, comment = int(json['id']), json['comment']
+    stmt = cand.update().where(cand.c.id == idx).values(comment=comment)
+    conn.execute(stmt)
+    return jsonify({"success": True})
