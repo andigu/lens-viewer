@@ -18,18 +18,11 @@ def main():
     if request.method == 'GET':
         if 'back' in request.args:
             idx, user = int(request.args['id']), request.args['user']
-            time = next(conn.execute(select([cand]).where(cand.c.id == idx).distinct()))['graded_time']
-            if time != 0:
-                query = select([cand]).where(
-                    and_(cand.c.graded_time < time, cand.c.graded_time > 0, cand.c.graded_by == user)).order_by(
-                    cand.c.graded_time.desc())
-            else:
-                query = select([cand]).where(
-                    and_(cand.c.graded_time > 0, cand.c.graded_by == user)).order_by(
-                    cand.c.graded_time.desc())
+            query = select([cand]).where(
+                and_(cand.c.id < idx, cand.c.graded_by == user)).order_by(cand.c.id.desc())
         else:
             user = request.args['user']
-            query = select([cand]).where(and_(cand.c.grade == None, cand.c.graded_by == user))
+            query = select([cand]).where(and_(cand.c.grade is None, cand.c.graded_by == user))
         n = int(request.args['n']) if 'n' in request.args else 10
         ret = []
         for i, row in enumerate(conn.execute(query)):
@@ -54,9 +47,11 @@ def to_csv():
     df.to_csv("export.csv")
     return jsonify({"success": True})
 
+
 @app.route("/users", methods=['GET'])
 def get_users():
     return jsonify([x['graded_by'] for x in conn.execute(select([cand.c.graded_by]).distinct())])
+
 
 @app.route("/comment", methods=['POST'])
 def comment():

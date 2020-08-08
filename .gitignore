@@ -8,6 +8,9 @@ node_modules/
 .idea/
 *.iml
 
+*.csv
+*.db
+
 # testing
 /coverage
 
