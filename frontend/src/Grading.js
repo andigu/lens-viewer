@@ -1,7 +1,7 @@
 import React from "react";
 import {Button, makeStyles, Paper, TextField, Typography, Snackbar} from "@material-ui/core";
 import SendIcon from "@material-ui/icons/Send";
-import axios from 'axios';
+import axios from './axios';
 import LensData from "./LensData";
 import ProgressPanel from "./ProgressPanel";
 import LensList from "./LensList";
@@ -70,9 +70,8 @@ export default function Grading(props) {
 
     const loadCands = (start, stop, override = false) => {
         if ((cursor >= 0) || override) {
-            axios.get("http://localhost:5000/candidates", {
-                params: {start: start, stop: stop, batch_id: batch.id},
-                withCredentials: true
+            axios.get("/candidates", {
+                params: {start: start, stop: stop, batch_id: batch.id}
             }).then(res => {
                 const candidates = _.sortBy(res.data.candidates, 'order')
                 const orders = res.data.candidates.map(x => x['order'])
@@ -80,16 +79,14 @@ export default function Grading(props) {
             })
         }
     }
-    const loadCursor = () => axios.get("http://localhost:5000/cursor", {
-        params: {batch_id: batch.id},
-        withCredentials: true
+    const loadCursor = () => axios.get("/cursor", {
+        params: {batch_id: batch.id}
     }).then(res => {
         setCursor(res.data.cursor)
         loadCands(res.data.cursor - 10, res.data.cursor + 10, true)
     })
-    const loadCounts = () => axios.get("http://localhost:5000/batch_stats", {
-        params: {batch_id: batch.id},
-        withCredentials: true
+    const loadCounts = () => axios.get("/batch_stats", {
+        params: {batch_id: batch.id}
     }).then(res => setCounts(res.data.counts))
 
     React.useEffect(() => {
@@ -104,18 +101,18 @@ export default function Grading(props) {
         if (["1", "2", "3", "4", "5"].includes(e.key)) {
             const grade = parseInt(e.key)
             const order = current.order
-            axios.post("http://localhost:5000/candidates", {
+            axios.post("/candidates", {
                 id: current.id,
                 grade: grade
-            }, {withCredentials: true}).then(res => {
+            }).then(res => {
                 setCounts(res.data.counts)
-                setCursor(cursor => cursor + 1)
+                setCursor(cursor => Math.min(cursor + 1, batch.n_cands-1))
                 setCands(cands => [..._.slice(cands, 0, order), _.update(cands[order], 'grade', () => grade), ..._.slice(cands,order+1)])
             })
         } else if (e.key === "b") {
-            setCursor(cursor => cursor - 1)
+            setCursor(cursor => Math.max(0, cursor - 1))
         } else if (e.key === "n") {
-            setCursor(cursor => cursor + 1)
+            setCursor(cursor => Math.min(cursor + 1, batch.n_cands-1))
         }
     }} tabIndex='0'>
         <div className={classes.leftContainer}>
@@ -159,10 +156,10 @@ export default function Grading(props) {
                             className={classes.button}
                             onClick={() => {
                                 const order = current.order
-                                axios.post("http://localhost:5000/candidates", {
+                                axios.post("/candidates", {
                                     id: current.id,
                                     comment: comment
-                                }, {withCredentials: true}).then(res => {
+                                }).then(res => {
                                     setSnackbarOpen(true)
                                     setCands(cands => [..._.slice(cands, 0, order), _.update(cands[order], 'comment', () => comment), ..._.slice(cands,order+1)])
                                 })

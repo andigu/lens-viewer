@@ -1,3 +1,4 @@
+drop table users;
 create table users
 (
     id      INTEGER PRIMARY KEY,

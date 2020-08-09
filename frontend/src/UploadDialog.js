@@ -66,7 +66,7 @@ export default function UploadDialog(props) {
                                             const formData = new FormData();
                                             acceptedFiles.forEach((file) => formData.append(file.name, file))
                                             setInFlight(true)
-                                            axios.post('http://localhost:5000/upload-batches', formData, {
+                                            axios.post('/upload-batches', formData, {
                                                 headers: {
                                                     'Content-Type': 'multipart/form-data'
                                                 },
