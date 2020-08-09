@@ -78,7 +78,7 @@ export default function UploadDialog(props) {
                                                 setInFlight(false)
                                             })
                                         }}>
-                                    Accept terms
+                                    Upload
                                 </Button>
                                 {inFlight && <CircularProgress size={24} className={classes.buttonProgress}/>}
                             </div>

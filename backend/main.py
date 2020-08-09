@@ -66,33 +66,6 @@ def login_required(function):
     return wrapper
 
 
-@app.route("/", methods=['GET', 'POST'])
-def main():
-    if request.method == 'GET':
-        if 'back' in request.args:
-            idx, user = int(request.args['id']), request.args['user']
-            query = select([cands]).where(
-                and_(cands.c.id < idx, cands.c.graded_by == user)).order_by(cands.c.id.desc())
-        else:
-            user = request.args['user']
-            query = select([cands]).where(and_(cands.c.grade is None, cands.c.graded_by == user))
-        n = int(request.args['n']) if 'n' in request.args else 10
-        ret = []
-        for i, row in enumerate(conn.execute(query)):
-            if i >= n:
-                break
-            else:
-                ret.append(dict(row))
-        return jsonify(ret)
-
-    elif request.method == 'POST':
-        json = request.get_json()
-        idx, grade = int(json['id']), int(json['grade'])
-        stmt = cands.update().where(cands.c.id == idx).values(grade=grade, graded_time=int(datetime.now().timestamp()))
-        conn.execute(stmt)
-        return jsonify({"success": True})
-
-
 @app.route("/candidates", methods=['GET', 'POST'])
 @login_required
 def candidates(_):
@@ -105,8 +78,16 @@ def candidates(_):
         return jsonify({"success": True, "candidates": data})
     else:
         data = request.get_json()
-        cand_id, grade = int(data['id']), int(data['grade'])
-        cands.update().where(cands.c.id == cand_id).values(grade=grade, graded_time=int(datetime.now().timestamp()))
+        cand_id = int(data['id'])
+        values = {}
+        if 'grade' in data:
+            values['grade'] = int(data['grade'])
+            values['graded_time'] = datetime.now()
+        if 'comment' in data:
+            values['comment'] = data['comment']
+        conn.execute(cands.update().where(cands.c.id == cand_id).values(values))
+        cand = conn.execute(cands.select(cands.c.id == cand_id)).fetchone()
+        return jsonify({"success": True, "counts": batch_statistics(cand.batch_id)})
 
 
 @app.route("/cursor", methods=['GET'])
@@ -116,16 +97,6 @@ def cursor(_):
     data = conn.execute(
         cands.select(and_(cands.c.batch_id == batch_id, cands.c.grade.is_(None))).order_by(cands.c.order)).fetchone()
     return jsonify({"success": True, "cursor": data.order})
-
-
-@app.route("/comment", methods=['POST'])
-def comment():
-    json = request.get_json()
-    idx, comment = int(json['id']), json['comment']
-    stmt = cands.update().where(cands.c.id == idx).values(comment=comment)
-    conn.execute(stmt)
-    return jsonify({"success": True})
-
 
 @app.route("/batch_stats", methods=['GET'])
 @login_required

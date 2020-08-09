@@ -4,6 +4,7 @@ import {FixedSizeList} from "react-window";
 import {ListItem, makeStyles, Typography} from "@material-ui/core";
 import React from "react";
 import Paper from "@material-ui/core/Paper";
+import _ from 'lodash'
 
 const useStyles = makeStyles(theme => ({
     card: {
@@ -30,15 +31,17 @@ export default function LensList(props) {
                                               loadMoreItems={loadCands}>
             {({onItemsRendered, ref}) => (
                 <FixedSizeList height={height} width={width} itemSize={100} itemCount={batch.n_cands} ref={(r) => {
-                    ref(r)
-                    listRef.current = r
+                    if (r) {
+                        ref(r)
+                        listRef.current = r
+                    }
                 }} onItemsRendered={onItemsRendered} layout="vertical">
                     {({index: i, style}) => {
                         return <ListItem key={i} style={style} className={classes.card} button
                                          selected={i === cursor} onClick={() => setCursor(i)}>
                             <div>
                                 <Typography variant="body1">
-                                    {isItemLoaded(i) ? `Lens #${candidates[i].order}` : `loading ${i}`}
+                                    {isItemLoaded(i) ? `Cand #${candidates[i].order}` : `loading ${i}`}
                                 </Typography>
                             </div>
                             {isItemLoaded(i) && <img src={candidates[i].url} style={{height: '100%'}}

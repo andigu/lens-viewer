@@ -66,7 +66,7 @@ export default function Grading(props) {
     const [cursor, setCursor] = React.useState(-1)
     const [counts, setCounts] = React.useState([0, 0, 0, 0, 0])
 
-    const loadCands = (start, stop, override=false) => {
+    const loadCands = (start, stop, override = false) => {
         if ((cursor >= 0) || override) {
             axios.get("http://localhost:5000/candidates", {
                 params: {start: start, stop: stop, batch_id: batch.id},
@@ -78,39 +78,49 @@ export default function Grading(props) {
             })
         }
     }
-    const loadCounts = () => axios.get("http://localhost:5000/batch_stats", {params: {batch_id: batch.id}, withCredentials: true}).then(res => setCounts(res.data.counts))
-    const loadCursor = () => axios.get("http://localhost:5000/cursor", {params: {batch_id: batch.id}, withCredentials: true}).then(res => {
+    const loadCursor = () => axios.get("http://localhost:5000/cursor", {
+        params: {batch_id: batch.id},
+        withCredentials: true
+    }).then(res => {
         setCursor(res.data.cursor)
         loadCands(res.data.cursor - 10, res.data.cursor + 10, true)
     })
+    const loadCounts = () => axios.get("http://localhost:5000/batch_stats", {
+        params: {batch_id: batch.id},
+        withCredentials: true
+    }).then(res => setCounts(res.data.counts))
 
     React.useEffect(() => {
-        console.log("Listening for keypress")
         loadCursor()
         loadCounts()
-        const listener = e => {
-            if (["1", "2", "3", "4"].includes(e.key)) {
-                const grade = parseInt(e.key)
-
-            } else if (e.key === "b") {
-                setCursor(cursor => cursor - 1)
-            } else if (e.key === "n") {
-                setCursor(cursor => cursor + 1)
-            }
-        }
-        window.addEventListener('keypress', listener)
-        return () => window.removeEventListener('keypress', listener)
     }, [batch.id])
-
+    const current = cands[cursor]
     React.useEffect(() => {
-        if (cands[cursor] && cands[cursor].comment) setComment(cands[cursor].comment)
-    }, [cursor])
-    return <div className={classes.content}>
+        if (current) setComment(current.comment)
+    }, [current])
+    return <div className={classes.content} onKeyPress={e => {
+        if (["1", "2", "3", "4", "5"].includes(e.key)) {
+            const grade = parseInt(e.key)
+            const order = current.order
+            axios.post("http://localhost:5000/candidates", {
+                id: current.id,
+                grade: grade
+            }, {withCredentials: true}).then(res => {
+                setCounts(res.data.counts)
+                setCursor(cursor => cursor + 1)
+                setCands(cands => [..._.slice(cands, 0, order), _.update(cands[order], 'grade', () => grade), ..._.slice(cands,order+1)])
+            })
+        } else if (e.key === "b") {
+            setCursor(cursor => cursor - 1)
+        } else if (e.key === "n") {
+            setCursor(cursor => cursor + 1)
+        }
+    }} tabIndex='0'>
         <div className={classes.leftContainer}>
             <div className={classes.lensDataContainer} style={{overflowY: 'scroll'}}>
                 <Paper className={classes.paper} style={{overflowX: 'scroll'}}>
                     <Typography variant='h6'>Lens Data</Typography>
-                    {cands[cursor] ? <LensData candidate={cands[cursor]}/> : <Typography>Loading...</Typography>}
+                    {current ? <LensData candidate={current}/> : <Typography>Loading...</Typography>}
                 </Paper>
             </div>
             <div className={classes.metricContainer}>
@@ -121,14 +131,14 @@ export default function Grading(props) {
             <div className={classes.imgListContainer}>
                 <div style={{flex: 10}}>
                     <Paper className={classes.paper}>
-                        {cands[cursor] ? <img className={classes.img} alt="Lens candidate"
-                                              src={cands[cursor].url}/> :
+                        {current ? <img className={classes.img} alt="Lens candidate"
+                                              src={current.url}/> :
                             <Typography>Loading...</Typography>}
                     </Paper>
                 </div>
                 <div style={{flex: 2}}>
-                    <LensList candidates={cands} batch={batch} loadCands={loadCands} cursor={cursor} setCursor={setCursor}/> :
-                        <Typography>Loading...</Typography>
+                    <LensList candidates={cands} batch={batch} loadCands={loadCands} cursor={cursor}
+                              setCursor={setCursor}/>
                 </div>
             </div>
             <div>
@@ -145,6 +155,15 @@ export default function Grading(props) {
                     <Button variant="contained"
                             color="primary"
                             className={classes.button}
+                            onClick={() => {
+                                const order = current.order
+                                axios.post("http://localhost:5000/candidates", {
+                                    id: current.id,
+                                    comment: comment
+                                }, {withCredentials: true}).then(res => {
+                                    setCands(cands => [..._.slice(cands, 0, order), _.update(cands[order], 'comment', () => comment), ..._.slice(cands,order+1)])
+                                })
+                            }}
                             endIcon={<SendIcon/>}>Comment</Button>
                 </Paper>
             </div>
