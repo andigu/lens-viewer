@@ -159,3 +159,7 @@ def get_file(_):
     df = pd.read_sql_query(cands.select(cands.c.batch_id == batch_id), conn, parse_dates=['graded_time'])
     df.to_csv(os.path.join(app.config['UPLOAD_FOLDER'], fname))
     return send_from_directory(app.config['UPLOAD_FOLDER'], fname, as_attachment=True)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=False, port=os.environ.get('PORT', 80))
