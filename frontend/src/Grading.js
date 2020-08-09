@@ -1,11 +1,12 @@
 import React from "react";
-import {Button, makeStyles, Paper, TextField, Typography} from "@material-ui/core";
+import {Button, makeStyles, Paper, TextField, Typography, Snackbar} from "@material-ui/core";
 import SendIcon from "@material-ui/icons/Send";
 import axios from 'axios';
 import LensData from "./LensData";
 import ProgressPanel from "./ProgressPanel";
 import LensList from "./LensList";
 import _ from "lodash"
+import MuiAlert from '@material-ui/lab/Alert';
 
 const useStyles = makeStyles(theme => ({
     content: {
@@ -65,6 +66,7 @@ export default function Grading(props) {
     const [cands, setCands] = React.useState(new Array(batch.n_cands))
     const [cursor, setCursor] = React.useState(-1)
     const [counts, setCounts] = React.useState([0, 0, 0, 0, 0])
+    const [snackbarOpen, setSnackbarOpen] = React.useState(false)
 
     const loadCands = (start, stop, override = false) => {
         if ((cursor >= 0) || override) {
@@ -129,14 +131,14 @@ export default function Grading(props) {
         </div>
         <div className={classes.rightContainer}>
             <div className={classes.imgListContainer}>
-                <div style={{flex: 10}}>
+                <div style={{flex: 9}}>
                     <Paper className={classes.paper}>
                         {current ? <img className={classes.img} alt="Lens candidate"
                                               src={current.url}/> :
                             <Typography>Loading...</Typography>}
                     </Paper>
                 </div>
-                <div style={{flex: 2}}>
+                <div style={{flex: 3}}>
                     <LensList candidates={cands} batch={batch} loadCands={loadCands} cursor={cursor}
                               setCursor={setCursor}/>
                 </div>
@@ -161,10 +163,14 @@ export default function Grading(props) {
                                     id: current.id,
                                     comment: comment
                                 }, {withCredentials: true}).then(res => {
+                                    setSnackbarOpen(true)
                                     setCands(cands => [..._.slice(cands, 0, order), _.update(cands[order], 'comment', () => comment), ..._.slice(cands,order+1)])
                                 })
                             }}
                             endIcon={<SendIcon/>}>Comment</Button>
+                    <Snackbar open={snackbarOpen} autoHideDuration={2000} onClose={() => setSnackbarOpen(false)}>
+                        <MuiAlert elevation={6} variant="filled" onClose={() => setSnackbarOpen(false)} severity="success">Comment submitted!</MuiAlert>
+                    </Snackbar>
                 </Paper>
             </div>
         </div>

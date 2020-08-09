@@ -1,9 +1,11 @@
-import React, {useEffect} from 'react';
+import React from 'react';
+import clsx from 'clsx';
 import {
     AppBar,
     Button,
     Divider,
     Drawer,
+    IconButton,
     List,
     ListItem,
     ListItemIcon,
@@ -11,26 +13,46 @@ import {
     ListSubheader,
     makeStyles,
     Toolbar,
-    Typography
+    Typography,
+    useTheme
 } from '@material-ui/core';
-import _ from 'lodash'
-import UploadIcon from '@material-ui/icons/CloudUpload';
-import UploadDialog from "./UploadDialog";
-import LoginDialog from "./LoginDialog";
+import MenuIcon from '@material-ui/icons/Menu';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import UploadIcon from "@material-ui/icons/CloudUpload";
 import {useCookies} from "react-cookie";
-import axios from 'axios';
+import LoginDialog from "./LoginDialog";
+import UploadDialog from "./UploadDialog";
+import axios from "axios";
 import Grading from "./Grading";
+import _ from "lodash";
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
     root: {
         display: 'flex',
-        height: '100vh'
+        width: '100%'
     },
     appBar: {
+        transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+    },
+    appBarShift: {
         width: `calc(100% - ${drawerWidth}px)`,
         marginLeft: drawerWidth,
+        transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+    },
+    menuButton: {
+        marginRight: theme.spacing(2),
+    },
+    hide: {
+        display: 'none',
     },
     drawer: {
         width: drawerWidth,
@@ -39,42 +61,75 @@ const useStyles = makeStyles((theme) => ({
     drawerPaper: {
         width: drawerWidth,
     },
-    toolbar: theme.mixins.toolbar,
+    drawerHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: theme.spacing(0, 1),
+        ...theme.mixins.toolbar,
+        justifyContent: 'flex-end',
+    },
     content: {
         flexGrow: 1,
-        backgroundColor: theme.palette.background.default,
         padding: theme.spacing(3),
+        transition: theme.transitions.create('margin', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+        marginLeft: -drawerWidth,
     },
-    title: {
-        flexGrow: 1
-    }
+    contentShift: {
+        transition: theme.transitions.create('margin', {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+        marginLeft: 0,
+    },
 }));
 
-export default function Home() {
+export default function Home(props) {
     const classes = useStyles();
-    const [uploadOpen, setOpen] = React.useState(false)
-    const [batches, setBatches] = React.useState([])
+    const theme = useTheme();
+    const [open, setOpen] = React.useState(true);
+    const {children} = props
     const [cookies, setCookies, removeCookie] = useCookies(['userId', 'selectedBatchId'])
+    const [batches, setBatches] = React.useState([])
+    const [uploadOpen, setUploadOpen] = React.useState(false)
     const pullBatches = () => {
         if (cookies.userId)
             axios.get('http://localhost:5000/batches', {withCredentials: true}).then(res => {
                 setBatches(res.data.batches)
             })
     }
-    useEffect(pullBatches, [cookies.userId])
+    React.useEffect(pullBatches, [cookies.userId])
     const selectedBatch = _.keyBy(batches, 'id')[parseInt(cookies.selectedBatchId)]
+
     return (
         <div className={classes.root}>
             <LoginDialog open={!Boolean(cookies.userId)} onLogin={userId => {
                 setCookies('userId', userId)
             }}/>
             <UploadDialog uploadOpen={uploadOpen} handleClose={() => {
-                setOpen(false)
+                setUploadOpen(false)
                 pullBatches()
             }}/>
-            <AppBar position="fixed" className={classes.appBar}>
+
+            <AppBar
+                position="fixed"
+                className={clsx(classes.appBar, {
+                    [classes.appBarShift]: open,
+                })}
+            >
                 <Toolbar>
-                    <Typography variant="h6" className={classes.title}>
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        onClick={() => setOpen(true)}
+                        edge="start"
+                        className={clsx(classes.menuButton, open && classes.hide)}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                    <Typography variant="h6" style={{flexGrow: 1}}>
                         Logged in user: {cookies.userId}
                     </Typography>
                     {cookies.userId &&
@@ -86,15 +141,20 @@ export default function Home() {
                 </Toolbar>
             </AppBar>
             <Drawer className={classes.drawer}
-                    variant="permanent"
-                    classes={{
-                        paper: classes.drawerPaper,
-                    }}
-                    anchor="left">
-                <div className={classes.toolbar}/>
-                <Divider/>
+                variant="persistent"
+                anchor="left"
+                open={open}
+                classes={{
+                    paper: classes.drawerPaper,
+                }}>
+                <div className={classes.drawerHeader}>
+                    <IconButton onClick={() => setOpen(false)}>
+                        {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                    </IconButton>
+                </div>
+                <Divider />
                 <List>
-                    <ListItem button onClick={() => setOpen(true)}>
+                    <ListItem button onClick={() => setUploadOpen(true)}>
                         <ListItemIcon><UploadIcon/></ListItemIcon>
                         <ListItemText primary="Upload"/>
                     </ListItem>
@@ -118,8 +178,10 @@ export default function Home() {
                     )}
                 </List>
             </Drawer>
-            <main className={classes.content}>
-                <div className={classes.toolbar}/>
+            <main className={clsx(classes.content, {
+                    [classes.contentShift]: open,
+                })}>
+                <div className={classes.drawerHeader} />
                 {selectedBatch && cookies.userId ? <Grading batch={selectedBatch}/> :
                     <Typography>Select a batch to grade</Typography>}
             </main>

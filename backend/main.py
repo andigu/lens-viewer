@@ -30,7 +30,13 @@ def batch_statistics(batch_id):
     counts = conn.execute(select([cands.c.grade, func.count(cands.c.grade)]).where(
         and_(cands.c.batch_id == batch_id, cands.c.grade.isnot(None))).group_by(
         cands.c.grade)).fetchall()
-    return [x['count_1'] for x in counts]
+    ret = [0, 0, 0, 0, 0]
+    for x in counts:
+        try:
+            ret[x['grade'] - 1] = x['count_1']
+        except:
+            pass
+    return ret
 
 
 def load_db(csv_path, now, u_id, batch_name):
@@ -97,6 +103,7 @@ def cursor(_):
     data = conn.execute(
         cands.select(and_(cands.c.batch_id == batch_id, cands.c.grade.is_(None))).order_by(cands.c.order)).fetchone()
     return jsonify({"success": True, "cursor": data.order})
+
 
 @app.route("/batch_stats", methods=['GET'])
 @login_required
