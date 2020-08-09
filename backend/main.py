@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import wraps
 
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from sqlalchemy import create_engine, MetaData, select, and_, func
 from werkzeug.utils import secure_filename
@@ -142,3 +142,12 @@ def login():
     matching = conn.execute(users.select(users.c.user_id == user_id)).fetchone()
     if not matching: conn.execute(users.insert().values(user_id=user_id))
     return jsonify({"success": True})
+
+@app.route("/export_batch")
+@login_required
+def get_file(_):
+    batch_id = request.args['batch_id']
+    fname = f'export-{batch_id}-{uuid.uuid4()}.csv'
+    df = pd.read_sql_query(cands.select(cands.c.batch_id == batch_id), conn, parse_dates=['graded_time'])
+    df.to_csv(os.path.join(app.config['UPLOAD_FOLDER'], fname))
+    return send_from_directory(app.config['UPLOAD_FOLDER'], fname, as_attachment=True)
