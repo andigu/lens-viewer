@@ -9,7 +9,7 @@ import {
     makeStyles,
     Typography
 } from "@material-ui/core";
-import axios from "axios";
+import axios from "./axios";
 import React from "react";
 
 const useStyles = makeStyles(theme => ({
