@@ -5,7 +5,7 @@ import {ListItem, makeStyles, Typography} from "@material-ui/core";
 import React from "react";
 import Paper from "@material-ui/core/Paper";
 import _ from 'lodash'
-
+const grades = ['Grade A', 'Grade B', 'Grade C', 'Grade D', 'Non lens']
 const useStyles = makeStyles(theme => ({
     card: {
         display: 'flex',
@@ -40,9 +40,16 @@ export default function LensList(props) {
                         return <ListItem key={i} style={style} className={classes.card} button
                                          selected={i === cursor} onClick={() => setCursor(i)}>
                             <div>
-                                <Typography variant="body1">
-                                    {isItemLoaded(i) ? `Cand #${candidates[i].order}` : `loading ${i}`}
-                                </Typography>
+                                {isItemLoaded(i) ? <>
+                                    <Typography variant="body1">
+                                        Cand #{candidates[i].order}
+                                    </Typography>
+                                    <Typography variant="body1" style={{color: candidates[i].grade ? 'green' : 'red'}}>
+                                        {candidates[i].grade ? grades[candidates[i].grade-1] : 'Ungraded'}
+                                    </Typography>
+                                </> : <Typography variant="body1">Loading...</Typography>
+                                }
+
                             </div>
                             {isItemLoaded(i) && <img src={candidates[i].url} style={{height: '100%'}}
                                                      alt='Lens preview'/>}
