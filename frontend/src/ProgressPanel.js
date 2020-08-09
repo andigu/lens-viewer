@@ -1,7 +1,7 @@
 import {Box, Button, LinearProgress, makeStyles, Paper, Typography} from "@material-ui/core";
 import React from "react";
 import _ from "lodash";
-import axios from 'axios'
+import axios from './axios'
 
 const useStyles = makeStyles(theme => ({
     paper: {
@@ -47,7 +47,7 @@ export default function ProgressPanel(props) {
             <Typography variant="body2" color="textSecondary">Marked
                 non-lens: {counts[4]} ({(counts[4] / batch.n_cands * 100).toFixed(2)}%)</Typography>
             <Button variant='outlined' onClick={() => {
-                axios.get("http://localhost:5000/export_batch", {
+                axios.get("/export_batch", {
                     params: {batch_id: batch.id},
                     withCredentials: true,
                     responseType: 'blob'

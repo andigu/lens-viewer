@@ -12,8 +12,10 @@ from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = './uploads'
 ALLOWED_EXTENSIONS = {'csv'}
-app = Flask(__name__)
+app = Flask(__name__, static_folder='./build', static_url_path='/')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+if not os.path.exists("uploads"):
+    os.mkdir("uploads")
 
 conn = create_engine('sqlite:///candidates.db', echo=False)
 meta = MetaData(bind=conn)
@@ -70,6 +72,11 @@ def login_required(function):
             return jsonify({"error": "Must be logged in", "success": False})
 
     return wrapper
+
+
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
 
 
 @app.route("/candidates", methods=['GET', 'POST'])
@@ -142,6 +149,7 @@ def login():
     matching = conn.execute(users.select(users.c.user_id == user_id)).fetchone()
     if not matching: conn.execute(users.insert().values(user_id=user_id))
     return jsonify({"success": True})
+
 
 @app.route("/export_batch")
 @login_required

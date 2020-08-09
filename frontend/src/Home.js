@@ -23,7 +23,7 @@ import UploadIcon from "@material-ui/icons/CloudUpload";
 import {useCookies} from "react-cookie";
 import LoginDialog from "./LoginDialog";
 import UploadDialog from "./UploadDialog";
-import axios from "axios";
+import axios from "./axios";
 import Grading from "./Grading";
 import _ from "lodash";
 
@@ -96,7 +96,7 @@ export default function Home(props) {
     const [uploadOpen, setUploadOpen] = React.useState(false)
     const pullBatches = () => {
         if (cookies.userId)
-            axios.get('http://localhost:5000/batches', {withCredentials: true}).then(res => {
+            axios.get('/batches').then(res => {
                 setBatches(res.data.batches)
             })
     }

@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import axios from './axios';
 import {
     Button,
     Dialog,
@@ -18,7 +18,7 @@ export default function LoginDialog(props) {
         if (userId.trim().length === 0) {
             setError("Enter a valid user ID")
         } else {
-            axios.post("http://localhost:5000/login", {"user_id": userId}).then((res) => {
+            axios.post("/login", {"user_id": userId}).then((res) => {
                 if (res.data.success) {
                     onLogin(userId)
                     setUserId('')
