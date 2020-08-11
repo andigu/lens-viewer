@@ -20,12 +20,11 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import UploadIcon from "@material-ui/icons/CloudUpload";
-import {useCookies} from "react-cookie";
 import LoginDialog from "./LoginDialog";
 import UploadDialog from "./UploadDialog";
-import axios from "./axios";
 import Grading from "./Grading";
-import _ from "lodash";
+import {connect} from "react-redux";
+import {dataSlice, fetchBatches, login, logout, selectedBatch} from "./redux";
 
 const drawerWidth = 240;
 
@@ -86,39 +85,27 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function Home(props) {
+function Home(props) {
     const classes = useStyles();
     const theme = useTheme();
     const [open, setOpen] = React.useState(true);
-    const {children} = props
-    const [cookies, setCookies, removeCookie] = useCookies(['userId', 'selectedBatchId'])
-    const [batches, setBatches] = React.useState([])
     const [uploadOpen, setUploadOpen] = React.useState(false)
-    const pullBatches = () => {
-        if (cookies.userId)
-            axios.get('/batches').then(res => {
-                setBatches(res.data.batches)
-            })
-    }
-    React.useEffect(pullBatches, [cookies.userId])
-    const selectedBatch = _.keyBy(batches, 'id')[parseInt(cookies.selectedBatchId)]
-
+    const {selectedBatch, fetchBatches, logout, batches, userId, selectBatch, login, selectedBatchId} = props
+    React.useEffect(() => {
+        fetchBatches()
+    }, [fetchBatches])
     return (
         <div className={classes.root}>
-            <LoginDialog open={!Boolean(cookies.userId)} onLogin={userId => {
-                setCookies('userId', userId)
-            }}/>
+            <LoginDialog open={!Boolean(userId)} onLogin={login}/>
             <UploadDialog uploadOpen={uploadOpen} handleClose={() => {
                 setUploadOpen(false)
-                pullBatches()
+                fetchBatches()
             }}/>
 
-            <AppBar
-                position="fixed"
-                className={clsx(classes.appBar, {
-                    [classes.appBarShift]: open,
-                })}
-            >
+            <AppBar position="fixed"
+                    className={clsx(classes.appBar, {
+                        [classes.appBarShift]: open,
+                    })}>
                 <Toolbar>
                     <IconButton
                         color="inherit"
@@ -127,32 +114,29 @@ export default function Home(props) {
                         edge="start"
                         className={clsx(classes.menuButton, open && classes.hide)}
                     >
-                        <MenuIcon />
+                        <MenuIcon/>
                     </IconButton>
                     <Typography variant="h6" style={{flexGrow: 1}}>
-                        Logged in user: {cookies.userId}
+                        Logged in user: {userId}
                     </Typography>
-                    {cookies.userId &&
-                    <Button color='inherit' variant='outlined' onClick={() => {
-                        removeCookie('userId')
-                        removeCookie('selectedBatchId')
-                        setBatches([])
-                    }}>Logout</Button>}
+                    {userId &&
+                    <Button color='inherit' variant='outlined' onClick={logout}>Logout</Button>}
                 </Toolbar>
             </AppBar>
             <Drawer className={classes.drawer}
-                variant="persistent"
-                anchor="left"
-                open={open}
-                classes={{
-                    paper: classes.drawerPaper,
-                }}>
+                    variant="persistent"
+                    anchor="left"
+                    open={open}
+                    classes={{
+                        paper: classes.drawerPaper,
+                    }}>
                 <div className={classes.drawerHeader}>
+                    <Typography variant="body1">Collapse</Typography>
                     <IconButton onClick={() => setOpen(false)}>
-                        {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                        {theme.direction === 'ltr' ? <ChevronLeftIcon/> : <ChevronRightIcon/>}
                     </IconButton>
                 </div>
-                <Divider />
+                <Divider/>
                 <List>
                     <ListItem button onClick={() => setUploadOpen(true)}>
                         <ListItemIcon><UploadIcon/></ListItemIcon>
@@ -165,9 +149,11 @@ export default function Home(props) {
                         Batches
                     </ListSubheader>
                 }>
-                    {batches.map(batch =>
-                        <ListItem button key={batch.id} onClick={() => setCookies('selectedBatchId', batch.id)}
-                                  selected={parseInt(cookies.selectedBatchId) === batch.id}>
+                    {Object.values(batches).map(batch =>
+                        <ListItem button key={batch.id} onClick={() => {
+                            selectBatch({batchId: batch.id})
+                        }}
+                                  selected={selectedBatchId === batch.id}>
                             <ListItemText primary={batch.name} secondary={
                                 <>
                                     Count: {batch.n_cands} <br/>
@@ -179,12 +165,24 @@ export default function Home(props) {
                 </List>
             </Drawer>
             <main className={clsx(classes.content, {
-                    [classes.contentShift]: open,
-                })}>
-                <div className={classes.drawerHeader} />
-                {selectedBatch && cookies.userId ? <Grading batch={selectedBatch}/> :
+                [classes.contentShift]: open,
+            })}>
+                <div className={classes.drawerHeader}/>
+                {selectedBatch && userId ? <Grading/> :
                     <Typography>Select a batch to grade</Typography>}
             </main>
         </div>
     );
 }
+
+export default connect(state => ({
+    selectedBatch: selectedBatch(state),
+    batches: state.data.batches,
+    userId: state.auth.userId,
+    selectedBatchId: state.data.selectedBatchId
+}), {
+    fetchBatches,
+    logout,
+    selectBatch: dataSlice.actions.selectBatch,
+    login
+})(Home)

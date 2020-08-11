@@ -9,6 +9,7 @@ node_modules/
 *.iml
 
 *.csv
+.venv
 
 # testing
 /coverage

@@ -5,23 +5,12 @@ from datetime import datetime
 from functools import wraps
 
 import pandas as pd
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-from sqlalchemy import create_engine, MetaData, select, and_, func
+from flask import request, jsonify, send_from_directory
+from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = './uploads'
-ALLOWED_EXTENSIONS = {'csv'}
-app = Flask(__name__, static_folder='./build', static_url_path='/')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-if not os.path.exists("uploads"):
-    os.mkdir("uploads")
-
-conn = create_engine('sqlite:///candidates.db', echo=False)
-meta = MetaData(bind=conn)
-meta.reflect()
-cands, users, batches = meta.tables['candidates'], meta.tables['users'], meta.tables['batches']
-CORS(app, supports_credentials=True)
+from app import app, db, ALLOWED_EXTENSIONS
+from app.models import Candidate, Batch, User, object_as_dict
 
 
 def allowed_file(filename):
@@ -29,13 +18,12 @@ def allowed_file(filename):
 
 
 def batch_statistics(batch_id):
-    counts = conn.execute(select([cands.c.grade, func.count(cands.c.grade)]).where(
-        and_(cands.c.batch_id == batch_id, cands.c.grade.isnot(None))).group_by(
-        cands.c.grade)).fetchall()
+    counts = Candidate.query.with_entities(Candidate.grade, func.count(Candidate.grade)).filter(
+        Candidate.batch_id == batch_id, Candidate.grade.isnot(None)).group_by(Candidate.grade).all()
     ret = [0, 0, 0, 0, 0]
     for x in counts:
         try:
-            ret[x['grade'] - 1] = x['count_1']
+            ret[x[0] - 1] = x[1]
         except:
             pass
     return ret
@@ -49,28 +37,27 @@ def load_db(csv_path, now, u_id, batch_name):
     df = df[['ra', 'dec', 'additional']].dropna(axis=0)
 
     if 'grade' not in df: df['grade'] = None
-    if 'graded_time' not in df: df['graded_time'] = 0
     if 'comment' not in df: df['comment'] = ''
-    if 'url' not in df: df['url'] = 'http://legacysurvey.org/viewer/jpeg-cutout?ra=' + df.ra.astype(
-        str) + '&dec=' + df.dec.astype(str) + '&width=101&height=101&layer=dr8'
-    batch_id = conn.execute(
-        batches.insert().values(owner=u_id, name=batch_name, upload_time=now, n_cands=len(df))).lastrowid
-    df['batch_id'] = batch_id
+    batch = Batch(owner_id=u_id, name=batch_name, upload_time=now, n_cands=len(df))
+    db.session.add(batch)
+    db.session.commit()
+    df['batch_id'] = batch.id
     df = df.reset_index(drop=True)
     df['order'] = df.index
-    df.to_sql('candidates', con=conn, if_exists='append', index=False)
+    df.to_sql('candidate', con=db.engine, if_exists='append', index=False)
 
 
 def login_required(function):
     @wraps(function)
     def wrapper():
         user_id = request.cookies['userId']
-        user_obj = conn.execute(users.select(users.c.user_id == user_id)).fetchone()
+        user_obj = User.query.filter(User.user_id == user_id).one_or_none()
         if user_obj:
             return function(user_obj)
         else:
-            return jsonify({"error": "Must be logged in", "success": False})
-
+            resp = jsonify({"error": "Must be logged in", "success": False})
+            resp.delete_cookie('userId')
+            return resp
     return wrapper
 
 
@@ -85,9 +72,10 @@ def candidates(_):
     if request.method == 'GET':
         start, stop = request.args['start'], request.args['stop']
         batch_id = request.args['batch_id']
-        data = conn.execute(cands.select(
-            and_(cands.c.batch_id == batch_id, start <= cands.c.order, cands.c.order <= stop))).fetchall()
-        data = [dict(x) for x in data]
+        data = Candidate.query.filter(Candidate.batch_id == batch_id, start <= Candidate.order, Candidate.order <= stop).all()
+        data = [
+            {'url': f'https://www.legacysurvey.org/viewer/jpeg-cutout?ra={x.ra}&dec={x.dec}&width=101&height=101&layer=dr8',
+             **object_as_dict(x)} for x in data]
         return jsonify({"success": True, "candidates": data})
     else:
         data = request.get_json()
@@ -98,8 +86,9 @@ def candidates(_):
             values['graded_time'] = datetime.now()
         if 'comment' in data:
             values['comment'] = data['comment']
-        conn.execute(cands.update().where(cands.c.id == cand_id).values(values))
-        cand = conn.execute(cands.select(cands.c.id == cand_id)).fetchone()
+        Candidate.query.filter(Candidate.id == cand_id).update(values)
+        db.session.commit()
+        cand = Candidate.query.filter(Candidate.id == cand_id).one()
         return jsonify({"success": True, "counts": batch_statistics(cand.batch_id)})
 
 
@@ -107,9 +96,8 @@ def candidates(_):
 @login_required
 def cursor(_):
     batch_id = request.args['batch_id']
-    data = conn.execute(
-        cands.select(and_(cands.c.batch_id == batch_id, cands.c.grade.is_(None))).order_by(cands.c.order)).fetchone()
-    return jsonify({"success": True, "cursor": data.order})
+    data = Candidate.query.filter(Candidate.batch_id == batch_id, Candidate.grade.is_(None)).order_by(Candidate.order).first()
+    return jsonify({"success": True, "cursor": data.order if data else 0})
 
 
 @app.route("/batch_stats", methods=['GET'])
@@ -138,7 +126,7 @@ def upload(user):
 @app.route("/batches", methods=['GET'])
 @login_required
 def get_batches(user):
-    res = [dict(x) for x in conn.execute(batches.select(batches.c.owner == user.id)).fetchall()]
+    res = [object_as_dict(x) for x in Batch.query.filter(Batch.owner_id == user.id).all()]
     return jsonify({'batches': res})
 
 
@@ -146,9 +134,21 @@ def get_batches(user):
 def login():
     json = request.get_json()
     user_id = json['user_id']
-    matching = conn.execute(users.select(users.c.user_id == user_id)).fetchone()
-    if not matching: conn.execute(users.insert().values(user_id=user_id))
-    return jsonify({"success": True})
+    matching = User.query.filter(User.user_id == user_id).one_or_none()
+    if not matching:
+        user = User(user_id = user_id)
+        db.session.add(user)
+        db.session.commit()
+    resp = jsonify({"success": True})
+    resp.set_cookie('userId', user_id)
+    return resp
+
+
+@app.route("/logout", methods=['POST'])
+def logout():
+    resp = jsonify({"success": True})
+    resp.delete_cookie('userId')
+    return resp
 
 
 @app.route("/export_batch")
@@ -156,10 +156,7 @@ def login():
 def get_file(_):
     batch_id = request.args['batch_id']
     fname = f'export-{batch_id}-{uuid.uuid4()}.csv'
-    df = pd.read_sql_query(cands.select(cands.c.batch_id == batch_id), conn, parse_dates=['graded_time'])
+    df = pd.read_sql_query(Candidate.query.filter(Candidate.batch_id == batch_id).statement, con=db.engine, parse_dates=['graded_time'])
     df.to_csv(os.path.join(app.config['UPLOAD_FOLDER'], fname))
-    return send_from_directory(app.config['UPLOAD_FOLDER'], fname, as_attachment=True)
+    return send_from_directory(f'../{app.config["UPLOAD_FOLDER"]}', fname, as_attachment=True)
 
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False, port=os.environ.get('PORT', 80))

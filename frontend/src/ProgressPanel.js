@@ -24,7 +24,7 @@ export default function ProgressPanel(props) {
     const {batch, counts} = props
     return <div className={classes.container}>
         <Paper className={classes.paper}>
-            <Typography variant='h6'>Batch {batch.name} metrics</Typography>
+            <Typography variant='h6'>Batch <i>{batch.name}</i> metrics</Typography>
             <Box display="flex" alignItems="center">
                 <Box minWidth='125px'>
                     <Typography variant="body2" color="textSecondary">Grading progress: </Typography>
@@ -48,7 +48,7 @@ export default function ProgressPanel(props) {
                 non-lens: {counts[4]} ({(counts[4] / batch.n_cands * 100).toFixed(2)}%)</Typography>
             <Button variant='outlined' onClick={() => {
                 axios.get("/export_batch", {
-                    params: {batch_id: batch.id},
+                    params: {batch_id: batch.id, timestamp: new Date().getMilliseconds()},
                     withCredentials: true,
                     responseType: 'blob'
                 }).then(res => {
