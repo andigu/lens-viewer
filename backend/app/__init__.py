@@ -20,4 +20,3 @@ db = SQLAlchemy(app)
 CORS(app, supports_credentials=True)
 
 from app import routes, models
-db.create_all()
