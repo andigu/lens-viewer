@@ -10,7 +10,7 @@ from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
 from app import app, db, ALLOWED_EXTENSIONS
-from app.models import Candidate, Batch, User, object_as_dict
+from models import Candidate, Batch, User, object_as_dict
 
 
 def allowed_file(filename):
@@ -158,5 +158,5 @@ def get_file(_):
     fname = f'export-{batch_id}-{uuid.uuid4()}.csv'
     df = pd.read_sql_query(Candidate.query.filter(Candidate.batch_id == batch_id).statement, con=db.engine, parse_dates=['graded_time'])
     df.to_csv(os.path.join(app.config['UPLOAD_FOLDER'], fname))
-    return send_from_directory(f'../{app.config["UPLOAD_FOLDER"]}', fname, as_attachment=True)
+    return send_from_directory(app.config["UPLOAD_FOLDER"], fname, as_attachment=True)
 
