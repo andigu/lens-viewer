@@ -29,7 +29,7 @@ export default function LensList(props) {
     const isItemLoaded = i => Boolean(candidates[i])
     React.useEffect(() => {
         if (listRef.current && cursor >= 0) listRef.current.scrollToItem(cursor, 'center')
-    }, [cursor, listRef])
+    }, [cursor])
     return <Paper className={classes.container}>
         <Button style={{width: '100%', flex: 0}} onClick={nextUngraded}>Next Ungraded</Button>
         <Divider/>
