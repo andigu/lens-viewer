@@ -1,2 +1,2 @@
 source .venv/bin/activate
-env FLASK_APP=main.py flask run
+env FLASK_APP=app.py flask run
