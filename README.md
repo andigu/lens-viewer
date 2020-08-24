@@ -3,16 +3,13 @@
 ## Setup
 
 Dependencies:
-* npm (brew install npm)
-* Python3 + Flask
-* pip packages: numpy, pandas, flask_cors, sqlalchemy
-
-Run `npm install` and then `npm start` in the frontend directory. In a separate shell run `env FLASK_APP=main.py env FLASK_ENV=development flask run` in the backend directory.
+Required packages are preinstalled. For any package issues reference requirements.txt for a list of package denpendencies.
 
 ## Getting Started
-The backend looks for a file called `candidates.csv`. This needs to be in the backend folder.
+In the backend folder run `./start.sh`.
 
-Usage is fairly simple: 1, 2, 3, 4 for a grade, and 5 for non-lens and b for back. Every 250 images or so, there seems to be some sort of caching problem, refreshing the page should resolve the issue.
+The inspection tool is avaliable via http://localhost:5000/. Enter any username, but remember it as your files will only be accessible by using the same username.  
 
-## Deploy
-`git subtree push --prefix backend heroku master`
+Simply upload a csv and make sure that it includes 'ra' and 'dec' columns. 
+
+Usage is fairly simple: 1, 2, 3, 4 for a grade, and 5 for non-lens and n for next and b for back. Every 250 images or so, there seems to be some sort of caching problem, refreshing the page should resolve the issue. Allow time for the images to be retirived from the skyviewer. 
