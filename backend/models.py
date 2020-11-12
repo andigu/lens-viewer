@@ -29,6 +29,7 @@ class Candidate(db.Model):
     additional = db.Column(db.Text, nullable=True)
     batch_id = db.Column(db.Integer, db.ForeignKey('batch.id'), nullable=False)
     batch = db.relationship('Batch', backref=db.backref('candidates', lazy=True))
+    filename = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, nullable=False)
     grade = db.Column(db.Integer, nullable=True)
     graded_time = db.Column(db.DateTime, nullable=True)

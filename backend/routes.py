@@ -34,7 +34,7 @@ def load_db(csv_path, now, u_id, batch_name):
     additional = df.loc[:, (df.columns != 'ra') & (df.columns != 'dec')].to_json(orient='records')
     additional = [json.dumps(x) for x in json.loads(additional)]
     df['additional'] = additional
-    df = df[['ra', 'dec', 'additional']].dropna(axis=0)
+    df = df[['ra', 'dec', 'additional', 'filename']]
 
     if 'grade' not in df: df['grade'] = None
     if 'comment' not in df: df['comment'] = ''
@@ -74,7 +74,7 @@ def candidates(_):
         batch_id = request.args['batch_id']
         data = Candidate.query.filter(Candidate.batch_id == batch_id, start <= Candidate.order, Candidate.order <= stop).all()
         data = [
-            {'url': f'https://www.legacysurvey.org/viewer/jpeg-cutout?ra={x.ra}&dec={x.dec}&width=101&height=101&layer=dr8',
+            {'url': f"local/{x.filename}" if x.filename else f'https://www.legacysurvey.org/viewer/jpeg-cutout?ra={x.ra}&dec={x.dec}&width=101&height=101&layer=dr8',
              **object_as_dict(x)} for x in data]
         return jsonify({"success": True, "candidates": data})
     else:

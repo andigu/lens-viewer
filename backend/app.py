@@ -19,4 +19,5 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 CORS(app, supports_credentials=True)
 import routes, models
+db.create_all()
 
