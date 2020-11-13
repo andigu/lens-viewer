@@ -21,7 +21,7 @@ Usage is fairly simple: 1, 2, 3, 4, and 5 for grades, n for next, and b for back
 
 
 
-##Below is Depricated:
+##Below is Depricated
 
 
 ## Getting Started
