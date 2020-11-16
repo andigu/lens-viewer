@@ -1,9 +1,13 @@
 from sqlalchemy import inspect
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db
 
+
 def object_as_dict(obj):
+    if hasattr(obj, 'serialize'): return obj.serialize()
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,6 +35,28 @@ class Candidate(db.Model):
     batch = db.relationship('Batch', backref=db.backref('candidates', lazy=True))
     filename = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=True)
     grade = db.Column(db.Integer, nullable=True)
     graded_time = db.Column(db.DateTime, nullable=True)
-    comment = db.Column(db.Text, nullable=True)
+    _lens = db.Column(db.Text, nullable=True)
+    _source = db.Column(db.Text, nullable=True)
+
+    @hybrid_property
+    def lens(self):
+        return [] if self._lens is None else eval(self._lens)
+
+    @lens.setter
+    def lens(self, lens):
+        self._lens = str(lens)
+
+    @hybrid_property
+    def source(self):
+        return [] if self._source is None else eval(self._source)
+
+    @source.setter
+    def source(self, source):
+        self._source = str(source)
+
+    def serialize(self):
+        tmp = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        return {**tmp, 'source': self.source, 'lens': self.lens}

@@ -7,6 +7,7 @@ import LensList from "./LensList";
 import MuiAlert from '@material-ui/lab/Alert';
 import {connect} from "react-redux";
 import {dataSlice, fetchCands, fetchCounts, fetchCursor, selectedBatch, setComment, setGrade} from "./redux";
+import LensImage from "./LensImage";
 
 const useStyles = makeStyles(theme => ({
     content: {
@@ -73,7 +74,6 @@ function Grading(props) {
     React.useEffect(() => {
         if (current) setComment(current.comment)
     }, [current])
-
     return <div className={classes.content} onKeyPress={e => {
         if (["1", "2", "3", "4", "5"].includes(e.key)) {
             setGrade({id: current.id, grade: parseInt(e.key)})
@@ -98,8 +98,7 @@ function Grading(props) {
             <div className={classes.imgListContainer}>
                 <div style={{flex: 9}}>
                     <Paper className={classes.paper}>
-                        {current ? <img className={classes.img} alt="Lens candidate"
-                                        src={current.url}/> :
+                        {current ? <LensImage current={current} width={500} height={500}/> :
                             <Typography>Loading...</Typography>}
                     </Paper>
                 </div>

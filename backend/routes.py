@@ -34,7 +34,8 @@ def load_db(csv_path, now, u_id, batch_name):
     additional = df.loc[:, (df.columns != 'ra') & (df.columns != 'dec')].to_json(orient='records')
     additional = [json.dumps(x) for x in json.loads(additional)]
     df['additional'] = additional
-    df = df[['ra', 'dec', 'additional', 'filename']]
+    columns = ['ra', 'dec', 'additional', 'filename'] if 'filename' in df else ['ra', 'dec', 'additional']
+    df = df[columns]
 
     if 'grade' not in df: df['grade'] = None
     if 'comment' not in df: df['comment'] = ''
@@ -128,6 +129,22 @@ def upload(user):
 def get_batches(user):
     res = [object_as_dict(x) for x in Batch.query.filter(Batch.owner_id == user.id).all()]
     return jsonify({'batches': res})
+
+@app.route("/mark", methods=['POST', 'DELETE'])
+@login_required
+def mark(_):
+    json = request.get_json()
+    cand_id = json['id']
+    cand = Candidate.query.filter(Candidate.id == cand_id).one()
+    if request.method == 'POST':
+        tp, coord = json['type'], tuple(json['coordinate'])
+        if tp == 'source': cand.source = [*cand.source, coord]
+        else: cand.lens = coord
+    else:
+        cand.lens = []
+        cand.source = tuple()
+    db.session.commit()
+    return jsonify({"success": True, "candidate": object_as_dict(cand)})
 
 
 @app.route("/login", methods=['POST'])

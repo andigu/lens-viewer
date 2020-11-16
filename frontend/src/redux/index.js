@@ -86,6 +86,22 @@ export const setComment = createAsyncThunk(
     }
 )
 
+export const setMark = createAsyncThunk(
+    'data/setMark',
+    async ({id, type, coordinate}, thunkAPI) => {
+        const res = await axios.post("/mark", {id, type, coordinate})
+        thunkAPI.dispatch(dataSlice.actions.updateCandidate({id, ...res.data['candidate']}))
+    }
+)
+
+export const clearMarks = createAsyncThunk(
+    'data/clearMarks',
+    async ({id}, thunkAPI) => {
+        const res = await axios.delete("/mark", {data: {id}})
+        thunkAPI.dispatch(dataSlice.actions.updateCandidate({id, ...res.data['candidate']}))
+    }
+)
+
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
@@ -130,7 +146,11 @@ export const dataSlice = createSlice({
         },
         setCounts: (state, action) => {
             state.counts = action.payload.counts
-        }
+        },
+        deleteBatch: (state, action) => {
+            state.batches = _.omit(state.batches, [action.payload.batchId])
+            state.selectedBatchId = null
+        },
     },
     extraReducers: {
         [fetchBatches.fulfilled]: (state, action) => {
