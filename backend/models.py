@@ -1,6 +1,6 @@
 from sqlalchemy import inspect
 from sqlalchemy.ext.hybrid import hybrid_property
-
+import math
 from app import db
 
 
@@ -60,3 +60,11 @@ class Candidate(db.Model):
     def serialize(self):
         tmp = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
         return {**tmp, 'source': self.source, 'lens': self.lens}
+
+    @staticmethod
+    def convert_pixel_ra_dec(pixel, ra_center, dec_center):
+        x, y = pixel
+        x, y = 1-x, 1-y
+        dec = dec_center + (y-0.5)*0.262*101/3600
+        ra = ra_center + (x-0.5)*0.262*101/3600 / math.cos(dec_center*3.14159265359/180)
+        return ra, dec

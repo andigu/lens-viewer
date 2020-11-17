@@ -182,5 +182,13 @@ def get_file(_):
     fname = f'export-{batch_id}-{uuid.uuid4()}.csv'
     df = pd.read_sql_query(Candidate.query.filter(Candidate.batch_id == batch_id).statement, con=db.engine,
                            parse_dates=['graded_time'])
+    df["lens"] = ""
+    df["source"] = ""
+    for i, row in df.iterrows():
+        try: df.at[i, "lens"] = list(Candidate.convert_pixel_ra_dec(eval(row["_lens"]), row["ra"], row["dec"]))
+        except: pass
+        try: df.at[i, "source"] = [Candidate.convert_pixel_ra_dec(src, row["ra"], row["dec"]) for src in eval(row["_source"])]
+        except: pass
+    df = df.drop(columns=["_lens", "_source"])
     df.to_csv(os.path.join(app.config['UPLOAD_FOLDER'], fname))
     return send_from_directory(app.config["UPLOAD_FOLDER"], fname, as_attachment=True)
