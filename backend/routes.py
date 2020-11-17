@@ -59,6 +59,7 @@ def login_required(function):
             resp = jsonify({"error": "Must be logged in", "success": False})
             resp.delete_cookie('userId')
             return resp
+
     return wrapper
 
 
@@ -73,10 +74,12 @@ def candidates(_):
     if request.method == 'GET':
         start, stop = request.args['start'], request.args['stop']
         batch_id = request.args['batch_id']
-        data = Candidate.query.filter(Candidate.batch_id == batch_id, start <= Candidate.order, Candidate.order <= stop).all()
-        data = [
-            {'url': f"local/{x.filename}" if x.filename else f'https://www.legacysurvey.org/viewer/jpeg-cutout?ra={x.ra}&dec={x.dec}&width=101&height=101&layer=dr8',
-             **object_as_dict(x)} for x in data]
+        data = Candidate.query.filter(Candidate.batch_id == batch_id, start <= Candidate.order,
+                                      Candidate.order <= stop).all()
+        data = [{**object_as_dict(x),
+                 'filename': f"local/{x.filename}",
+                 'skyviewer': f'https://www.legacysurvey.org/viewer/jpeg-cutout?ra={x.ra}&dec={x.dec}&width=101&height=101&layer=dr8',
+                 } for x in data]
         return jsonify({"success": True, "candidates": data})
     else:
         data = request.get_json()
@@ -97,7 +100,8 @@ def candidates(_):
 @login_required
 def cursor(_):
     batch_id = request.args['batch_id']
-    data = Candidate.query.filter(Candidate.batch_id == batch_id, Candidate.grade.is_(None)).order_by(Candidate.order).first()
+    data = Candidate.query.filter(Candidate.batch_id == batch_id, Candidate.grade.is_(None)).order_by(
+        Candidate.order).first()
     return jsonify({"success": True, "cursor": data.order if data else 0})
 
 
@@ -130,6 +134,7 @@ def get_batches(user):
     res = [object_as_dict(x) for x in Batch.query.filter(Batch.owner_id == user.id).all()]
     return jsonify({'batches': res})
 
+
 @app.route("/mark", methods=['POST', 'DELETE'])
 @login_required
 def mark(_):
@@ -138,8 +143,10 @@ def mark(_):
     cand = Candidate.query.filter(Candidate.id == cand_id).one()
     if request.method == 'POST':
         tp, coord = json['type'], tuple(json['coordinate'])
-        if tp == 'source': cand.source = [*cand.source, coord]
-        else: cand.lens = coord
+        if tp == 'source':
+            cand.source = [*cand.source, coord]
+        else:
+            cand.lens = coord
     else:
         cand.lens = []
         cand.source = tuple()
@@ -153,7 +160,7 @@ def login():
     user_id = json['user_id']
     matching = User.query.filter(User.user_id == user_id).one_or_none()
     if not matching:
-        user = User(user_id = user_id)
+        user = User(user_id=user_id)
         db.session.add(user)
         db.session.commit()
     resp = jsonify({"success": True})
@@ -173,7 +180,7 @@ def logout():
 def get_file(_):
     batch_id = request.args['batch_id']
     fname = f'export-{batch_id}-{uuid.uuid4()}.csv'
-    df = pd.read_sql_query(Candidate.query.filter(Candidate.batch_id == batch_id).statement, con=db.engine, parse_dates=['graded_time'])
+    df = pd.read_sql_query(Candidate.query.filter(Candidate.batch_id == batch_id).statement, con=db.engine,
+                           parse_dates=['graded_time'])
     df.to_csv(os.path.join(app.config['UPLOAD_FOLDER'], fname))
     return send_from_directory(app.config["UPLOAD_FOLDER"], fname, as_attachment=True)
-

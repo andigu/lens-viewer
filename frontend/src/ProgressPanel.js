@@ -1,9 +1,24 @@
-import {Box, Button, ButtonGroup, LinearProgress, makeStyles, Paper, Typography} from "@material-ui/core";
-import {Settings as SettingsIcon, ImportExport as ImportExportIcon} from '@material-ui/icons';
+import {
+    Box,
+    Button,
+    ButtonGroup,
+    Checkbox,
+    LinearProgress,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    makeStyles,
+    Paper,
+    Typography
+} from "@material-ui/core";
+import {ImportExport as ImportExportIcon, Settings as SettingsIcon} from '@material-ui/icons';
 import React from "react";
 import _ from "lodash";
 import axios from './axios'
 import SettingsDialog from "./SettingsDialog";
+import {connect} from "react-redux";
+import {dataSlice} from "./redux";
 
 const useStyles = makeStyles(theme => ({
     paper: {
@@ -21,7 +36,7 @@ const useStyles = makeStyles(theme => ({
     }
 }))
 
-export default function ProgressPanel(props) {
+function ProgressPanel(props) {
     const classes = useStyles()
     const {batch, counts} = props
     const [open, setOpen] = React.useState(false);
@@ -39,16 +54,18 @@ export default function ProgressPanel(props) {
                     <Typography variant="body2" color="textSecondary">{_.sum(counts)}/{batch.n_cands}</Typography>
                 </Box>
             </Box>
-            <Typography variant="body2" color="textSecondary">Marked
-                A's: {counts[0]} ({(counts[0] / batch.n_cands * 100).toFixed(2)}%)</Typography>
-            <Typography variant="body2" color="textSecondary">Marked
-                B's: {counts[1]} ({(counts[1] / batch.n_cands * 100).toFixed(2)}%)</Typography>
-            <Typography variant="body2" color="textSecondary">Marked
-                C's: {counts[2]} ({(counts[2] / batch.n_cands * 100).toFixed(2)}%)</Typography>
-            <Typography variant="body2" color="textSecondary">Marked
-                D's: {counts[3]} ({(counts[3] / batch.n_cands * 100).toFixed(2)}%)</Typography>
-            <Typography variant="body2" color="textSecondary">Marked
-                non-lens: {counts[4]} ({(counts[4] / batch.n_cands * 100).toFixed(2)}%)</Typography>
+            <List>
+                {['A', 'B', 'C', 'D', 'Non-lenses'].map((label, i) =>
+                    <ListItem key={i} button onClick={() => {props.flipFilter({idx: i})}}>
+                        <ListItemText primary={`${label}: ${counts[i]} (${(counts[i] / batch.n_cands * 100).toFixed(2)}%)`}/>
+                        <ListItemSecondaryAction>
+                            <Checkbox edge="end"
+                                      onChange={() => {props.flipFilter({idx: i})}}
+                                      checked={props.filters ? !props.filters[i] : true}/>
+                        </ListItemSecondaryAction>
+                    </ListItem>
+                )}
+            </List>
             <ButtonGroup color="primary">
                 <Button style={{'width': '100%'}}
                         startIcon={<ImportExportIcon/>}
@@ -66,9 +83,12 @@ export default function ProgressPanel(props) {
                                 link.click();
                             })
                         }}>Export to CSV</Button>
-                <Button style={{'width': '100%'}} startIcon={<SettingsIcon/>} onClick={() => setOpen(true)}>Settings</Button>
+                <Button style={{'width': '100%'}} startIcon={<SettingsIcon/>}
+                        onClick={() => setOpen(true)}>Settings</Button>
             </ButtonGroup>
         </Paper>
         <SettingsDialog open={open} handleClose={() => setOpen(false)}/>
     </div>
 }
+
+export default connect(state => ({filters: state.data.filters}), {flipFilter: dataSlice.actions.flipFilter})(ProgressPanel)

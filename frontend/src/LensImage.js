@@ -5,8 +5,8 @@ import {connect} from "react-redux";
 import {clearMarks, setMark} from "./redux";
 
 function LensImage(props) {
-    const {current, width, height} = props;
-    const src = current.url;
+    const {useSkyviewer, current, width, height} = props;
+    const src = useSkyviewer ? current.skyviewer : current.filename;
     const dim = Math.min(width, height);
     const img = new window.Image();
     img.src = src;
@@ -38,7 +38,7 @@ function LensImage(props) {
     </div>
 }
 
-export default connect(null, {
+export default connect(state => ({useSkyviewer: state.data.useSkyviewer}), {
     clearMarks,
     setMark
 })(LensImage)

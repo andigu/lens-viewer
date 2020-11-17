@@ -4,6 +4,7 @@ import {FixedSizeList} from "react-window";
 import {Button, Divider, ListItem, makeStyles, Typography} from "@material-ui/core";
 import React from "react";
 import Paper from "@material-ui/core/Paper";
+import {connect} from "react-redux";
 
 const grades = ['Grade A', 'Grade B', 'Grade C', 'Grade D', 'Non lens']
 const useStyles = makeStyles(theme => ({
@@ -22,8 +23,8 @@ const useStyles = makeStyles(theme => ({
     }
 }))
 
-export default function LensList(props) {
-    const {candidates, batch, loadCands, cursor, setCursor, nextUngraded} = props;
+function LensList(props) {
+    const {candidates, useSkyviewer, batch, loadCands, cursor, setCursor, nextUngraded} = props;
     const classes = useStyles()
     const listRef = React.createRef()
     const isItemLoaded = i => Boolean(candidates[i])
@@ -63,7 +64,7 @@ export default function LensList(props) {
                                         }
 
                                     </div>
-                                    {isItemLoaded(i) && <img src={candidates[i].url} style={{height: '100%'}}
+                                    {isItemLoaded(i) && <img src={useSkyviewer ? candidates[i].skyviewer : candidates[i].filename} style={{height: '100%'}}
                                                              alt='Lens preview'/>}
                                 </ListItem>
                             }}
@@ -77,3 +78,5 @@ export default function LensList(props) {
         </div>
     </Paper>
 }
+
+export default connect(state => ({useSkyviewer: state.data.useSkyviewer}))(LensList)

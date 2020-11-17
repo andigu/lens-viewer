@@ -124,11 +124,19 @@ export const dataSlice = createSlice({
     name: 'data',
     initialState: dataAdapter.getInitialState({
         selectedBatchId: null,
+        useSkyviewer: true,
         batches: {},
         cursor: null,
-        counts: [0, 0, 0, 0, 0]
+        counts: [0, 0, 0, 0, 0],
+        filters: [false, false, false, false, false]
     }),
     reducers: {
+        flipFilter: (state, action) => {
+            state.filters[action.payload.idx] = !state.filters[action.payload.idx]
+        },
+        setUseSkyviewer: (state, action) => {
+            state.useSkyviewer = action.payload.useSkyviewer;
+        },
         selectBatch: (state, action) => {
             if (state.batchId !== action.payload.batchId) {
                 state.selectedBatchId = action.payload.batchId
@@ -143,6 +151,15 @@ export const dataSlice = createSlice({
         },
         setCursor: (state, action) => {
             state.cursor = Math.min(Math.max(action.payload.cursor, 0), state.batches[state.selectedBatchId].n_cands - 1)
+        },
+        progressCursor: (state, action) => {
+            const direction = action.payload.forward ? 1 : -1;
+            let idx = state.cursor + direction;
+            const N = state.batches[state.selectedBatchId].n_cands;
+            while (0 <= idx && idx < N && state.filters[state.candidates[idx].grade - 1] && state.candidates[idx].grade !== null) {
+                idx += direction;
+            }
+            state.cursor = Math.min(Math.max(idx, 0), N - 1);
         },
         setCounts: (state, action) => {
             state.counts = action.payload.counts
@@ -172,7 +189,9 @@ export const dataSlice = createSlice({
             batches: [],
             candidates: {},
             cursor: null,
-            counts: [0, 0, 0, 0, 0]
+            counts: [0, 0, 0, 0, 0],
+            filters: [false, false, false, false, false],
+            useSkyviewer: true
         })
     }
 })

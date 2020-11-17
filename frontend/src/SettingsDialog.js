@@ -1,16 +1,37 @@
 import React from "react";
-import {Dialog, DialogTitle, DialogContent, Button, DialogContentText} from "@material-ui/core";
+import {
+    Button,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    ListItemSecondaryAction,
+    ListItemText,
+    Switch,
+    List
+} from "@material-ui/core";
+import {dataSlice} from "./redux";
+import {connect} from "react-redux";
 
 
-export default function SettingsDialog(props) {
+function SettingsDialog(props) {
     const {open, handleClose} = props;
     return <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Settings</DialogTitle>
         <DialogContent>
-            <DialogContentText>
-                More settings to come
-            </DialogContentText>
-            <Button color='secondary'>Delete</Button>
+            Configuring inspection settings for current batch. TODO: custom keybindings, delete
+            <List>
+                <ListItemText primary="Use Skyviewer"/>
+                <ListItemSecondaryAction>
+                    <Switch edge="end"
+                            onChange={() => {props.setUseSkyviewer({useSkyviewer: !props.useSkyviewer})}}
+                            checked={props.useSkyviewer}/>
+                </ListItemSecondaryAction>
+            </List>
+            <Button color='secondary'>Delete (WIP)</Button>
         </DialogContent>
     </Dialog>
 }
+
+export default connect(state => ({useSkyviewer: state.data.useSkyviewer}), {
+    setUseSkyviewer: dataSlice.actions.setUseSkyviewer
+})(SettingsDialog)

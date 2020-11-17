@@ -30,7 +30,7 @@ export default function LensData(props) {
                 </TableRow>
                 <TableRow>
                     <TableCell component="th" scope="row">URL</TableCell>
-                    <TableCell><a href={candidate.url} target='_blank'
+                    <TableCell><a href={candidate.skyviewer} target='_blank'
                                   rel="noopener noreferrer">Skyviewer</a></TableCell>
                 </TableRow>
                 <TableRow>

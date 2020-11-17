@@ -61,7 +61,7 @@ const useStyles = makeStyles(theme => ({
 
 function Grading(props) {
     const classes = useStyles()
-    const {selectedBatch: batch, fetchCands, fetchCursor, fetchCounts, cursor, setCursor, candidates, setGrade, counts, setComment: submitComment} = props
+    const {selectedBatch: batch, fetchCands, fetchCursor, fetchCounts, cursor, setCursor, progressCursor, candidates, setGrade, counts, setComment: submitComment} = props
 
     const [comment, setComment] = React.useState('')
     const [snackbarOpen, setSnackbarOpen] = React.useState(false)
@@ -78,9 +78,9 @@ function Grading(props) {
         if (["1", "2", "3", "4", "5"].includes(e.key)) {
             setGrade({id: current.id, grade: parseInt(e.key)})
         } else if (e.key === "b") {
-            setCursor({cursor: cursor - 1})
+            progressCursor({forward: false})
         } else if (e.key === "n") {
-            setCursor({cursor: cursor + 1})
+            progressCursor({forward: true})
         }
     }} tabIndex='0'>
         <div className={classes.leftContainer}>
@@ -148,5 +148,6 @@ export default connect(state => ({
     setCursor: dataSlice.actions.setCursor,
     updateCandidate: dataSlice.actions.updateCandidate,
     setGrade,
+    progressCursor: dataSlice.actions.progressCursor,
     setComment
 })(Grading)
