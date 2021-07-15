@@ -10,7 +10,8 @@ This setup works withing python 3.7
  
  > npm install
  
- If prompted, > npm aduit fix
+ If prompted run:
+ > npm aduit fix
  
  > npm start
  
@@ -26,6 +27,9 @@ This setup works withing python 3.7
  
  > env FLASK_APP=app.py flask run
  
+ Following this message: 'Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)'
+ Return to browser window and upload csv with at least columns labeled 'name', 'ra', 'dec'
+
 
  For any package issues reference requirements.txt for a list of package versions.
 
