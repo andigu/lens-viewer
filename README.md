@@ -27,7 +27,8 @@ This setup works withing python 3.7
  
  > env FLASK_APP=app.py flask run
  
- Following this message: 'Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)'
+ Following this message: 'Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)'...
+
  Return to browser window and upload csv with at least columns labeled 'name', 'ra', 'dec'
 
 
