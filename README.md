@@ -12,10 +12,11 @@ This setup works withing python 3.7
  
  If prompted run:
  > npm aduit fix
- 
+
+ Then run:
  > npm start
  
- Open a new terminal window
+ Open a new terminal window...
  
  > cd .. 
  
