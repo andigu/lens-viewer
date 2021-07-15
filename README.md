@@ -3,20 +3,29 @@
 ## Setup
 
  This setup works withing python 3.7
+ 
  `git clone https://github.com/andigu/lens-viewer.git`
+ 
  `cd lens-viewer/frontend`
+ 
  `npm install`
  
- If prompted run:npm aduit fix
+ If prompted run:
+ `npm aduit fix`
 
  Then run:
  `npm start`
  
  Open a new terminal window...
+ 
  `cd .. `
+ 
  `cd backend`
+ 
  `conda install -c anaconda Flask-Cors==3.0.8`
+ 
  `conda install -c conda-forge Flask-SQLAlchemy==2.4.4`
+ 
  `env FLASK_APP=app.py flask run`
  
  Following this message: `Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)`...
