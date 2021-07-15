@@ -2,27 +2,29 @@
 
 ## Setup
 
- '> git clone https://github.com/andigu/lens-viewer.git'
+This setup works withing python 3.7
+
+ > git clone https://github.com/andigu/lens-viewer.git
  
- '> cd lens-viewer/frontend'
+ > cd lens-viewer/frontend
  
- '> npm install'
+ > npm install
  
- If prompted, '> npm aduit fix'
+ If prompted, > npm aduit fix
  
- '> npm start'
+ > npm start
  
  Open a new terminal window
  
- '> cd .. '
+ > cd .. 
  
- '> cd backend'
+ > cd backend
  
- '> conda install -c anaconda Flask-Cors==3.0.8'
+ > conda install -c anaconda Flask-Cors==3.0.8
  
- '> conda install -c conda-forge Flask-SQLAlchemy==2.4.4'
+ > conda install -c conda-forge Flask-SQLAlchemy==2.4.4
  
- '> env FLASK_APP=app.py flask run'
+ > env FLASK_APP=app.py flask run
  
 
  For any package issues reference requirements.txt for a list of package versions.
@@ -37,7 +39,7 @@ Then navigate to backend and run `env FLASK_APP=app.py flask run`.
 
 Enter any username, but remember it as your files will only be accessible by using the same username.
 
-Simply upload a csv and make sure that it includes at least 'ra', 'dec', and 'filename' columns. 
+Simply upload a csv and make sure that it includes at least ra, dec, and filename columns. 
 
 Usage is fairly simple: 1, 2, 3, 4, and 5 for grades, n for next, and b for back.
 
