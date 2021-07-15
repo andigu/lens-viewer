@@ -2,8 +2,18 @@
 
 ## Setup
 
-Dependencies:
-Required packages are preinstalled. For any package issues reference requirements.txt for a list of package denpendencies.
+ > git clone https://github.com/andigu/lens-viewer.git
+ > cd lens-viewer/frontend
+ > npm install
+ If prompted, > npm aduit fix
+ > npm start
+ > cd .. 
+ > cd backend
+ > conda install -c anaconda Flask-Cors==3.0.8
+ > conda install -c conda-forge Flask-SQLAlchemy==2.4.4
+ > env FLASK_APP=app.py flask run
+
+ For any package issues reference requirements.txt for a list of package versions.
 
 ## Getting Started
 
@@ -19,16 +29,3 @@ Simply upload a csv and make sure that it includes at least 'ra', 'dec', and 'fi
 
 Usage is fairly simple: 1, 2, 3, 4, and 5 for grades, n for next, and b for back.
 
-
-
-##Below is Depricated
-
-
-## Getting Started
-In the backend folder run `./start.sh`.
-
-The inspection tool is avaliable via http://localhost:5000/. Enter any username, but remember it as your files will only be accessible by using the same username.  
-
-Simply upload a csv and make sure that it includes 'ra' and 'dec' columns. 
-
-Usage is fairly simple: 1, 2, 3, 4 for a grade, and 5 for non-lens and n for next and b for back. Every 250 images or so, there seems to be some sort of caching problem, refreshing the page should resolve the issue. Allow time for the images to be retirived from the skyviewer. 
