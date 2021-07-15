@@ -3,16 +3,27 @@
 ## Setup
 
  '> git clone https://github.com/andigu/lens-viewer.git'
+ 
  '> cd lens-viewer/frontend'
+ 
  '> npm install'
+ 
  If prompted, '> npm aduit fix'
+ 
  '> npm start'
+ 
  Open a new terminal window
+ 
  '> cd .. '
+ 
  '> cd backend'
+ 
  '> conda install -c anaconda Flask-Cors==3.0.8'
+ 
  '> conda install -c conda-forge Flask-SQLAlchemy==2.4.4'
+ 
  '> env FLASK_APP=app.py flask run'
+ 
 
  For any package issues reference requirements.txt for a list of package versions.
 
