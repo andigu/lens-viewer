@@ -35,7 +35,6 @@ def load_db(csv_path, now, u_id, batch_name):
     additional = [json.dumps(x) for x in json.loads(additional)]
     df['additional'] = additional
     df['filename'] = [f"local/{name}.jpeg" for name in (df["name"] if "name" in df.columns else df["filename"])]
-    print(df)
     if 'grade' not in df: df['grade'] = None
     if 'comment' not in df: df['comment'] = ''
     columns = ['ra', 'dec', 'additional', 'filename', 'grade', 'comment']
