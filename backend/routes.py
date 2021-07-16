@@ -78,7 +78,7 @@ def candidates(_):
                                       Candidate.order <= stop).all()
         data = [{**object_as_dict(x),
                  'filename': x.filename,
-                 'skyviewer': f'https://www.legacysurvey.org/viewer/cutout.jpg?ra={x.ra}&dec={x.dec}&size=101&layer=ls-dr9',
+                 'skyviewer': f'https://www.legacysurvey.org/viewer/?ra={x.ra}&dec={x.dec}&size=101&layer=ls-dr9',
                  } for x in data]
         return jsonify({"success": True, "candidates": data})
     else:
