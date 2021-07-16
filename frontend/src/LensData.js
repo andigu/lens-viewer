@@ -30,7 +30,7 @@ export default function LensData(props) {
                 </TableRow>
                 <TableRow>
                     <TableCell component="th" scope="row">URL</TableCell>
-                    <TableCell><a href={`https://www.legacysurvey.org/viewer/?ra=${candidate.ra}&dec=${candidate.dec}&size=101&layer=ls-dr9`} target='_blank'
+                    <TableCell><a href={`https://www.legacysurvey.org/viewer/?ra=${candidate.ra}&dec=${candidate.dec}&size=101&layer=ls-dr9&zoom=15`} target='_blank'
                                   rel="noopener noreferrer">Skyviewer</a></TableCell>
                 </TableRow>
                 <TableRow>
