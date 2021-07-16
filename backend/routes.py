@@ -34,11 +34,12 @@ def load_db(csv_path, now, u_id, batch_name):
     additional = df.loc[:, (df.columns != 'ra') & (df.columns != 'dec')].to_json(orient='records')
     additional = [json.dumps(x) for x in json.loads(additional)]
     df['additional'] = additional
-    columns = ['ra', 'dec', 'additional', 'filename']
-    df['filename'] = [f"local/{name}.jpeg" for name in df["name"]]
-    df = df[columns]
+    df['filename'] = [f"local/{name}.jpeg" for name in (df["name"] if "name" in df.columns else df["filename"])]
+    print(df)
     if 'grade' not in df: df['grade'] = None
     if 'comment' not in df: df['comment'] = ''
+    columns = ['ra', 'dec', 'additional', 'filename', 'grade', 'comment']
+    df = df[columns]
     batch = Batch(owner_id=u_id, name=batch_name, upload_time=now, n_cands=len(df))
     db.session.add(batch)
     db.session.commit()
