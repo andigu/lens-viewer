@@ -6,4 +6,4 @@ cd ../backend
 source .venv/bin/activate
 pip freeze > requirements.txt
 cd ../
-#git subtree push --prefix backend heroku master
+git subtree push --prefix backend heroku master
